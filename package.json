@@ -7,8 +7,14 @@
   "author": "Kagami <moe.pascal@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "@types/got": "^8.3.4",
     "bluebird": "^3.5.2",
+    "date-fns": "^1.29.0",
     "fs-extra": "^7.0.0",
+    "got": "^9.2.2",
+    "gray-matter": "^4.0.1",
+    "lodash": "^4.17.11",
+    "turndown": "^5.0.1",
     "xml-js": "^1.6.8"
   },
   "devDependencies": {
@@ -17,6 +23,7 @@
     "@types/bluebird": "^3.5.24",
     "@types/bluebird-global": "^3.5.9",
     "@types/fs-extra": "^5.0.4",
+    "@types/lodash": "^4.14.116",
     "@types/node": "^10.11.4",
     "husky": "^1.1.1",
     "lint-staged": "^7.3.0",
