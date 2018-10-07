@@ -6,10 +6,16 @@
   "repository": "git@github.com:KagamiChan/pressdown.git",
   "author": "Kagami <moe.pascal@gmail.com>",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "bluebird": "^3.5.2",
+    "fs-extra": "^7.0.0",
+    "xml-js": "^1.6.8"
+  },
   "devDependencies": {
     "@commitlint/cli": "^7.2.0",
     "@commitlint/config-conventional": "^7.1.2",
+    "@types/bluebird": "^3.5.24",
+    "@types/bluebird-global": "^3.5.9",
     "@types/fs-extra": "^5.0.4",
     "@types/node": "^10.11.4",
     "husky": "^1.1.1",
