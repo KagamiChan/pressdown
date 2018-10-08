@@ -3,17 +3,23 @@ import dateFns from 'date-fns'
 import fs from 'fs-extra'
 import got from 'got'
 import matter from 'gray-matter'
-import { each, filter } from 'lodash'
+import { filter, map } from 'lodash'
 import path from 'path'
 import TurndownService from 'turndown'
 import url from 'url'
 import convert, { ElementCompact } from 'xml-js'
 
 interface ITextType {
+  _attributes?: {
+    [key: string]: string
+  }
   _text: string
 }
 
 interface ICDataType {
+  _attributes?: {
+    [key: string]: string
+  }
   _cdata: string
 }
 
@@ -24,6 +30,8 @@ interface IWordpressPost {
   'wp:post_type': ICDataType
   'wp:status': ICDataType
   'wp:post_name': ICDataType
+  category: ICDataType | ICDataType[]
+  'wp:post_id': ITextType
 }
 
 interface IWordpressDataCompact extends ElementCompact {
@@ -33,6 +41,8 @@ interface IWordpressDataCompact extends ElementCompact {
     }
   }
 }
+
+const ensureArray = <T = any>(input: T | T[]): T[] => (Array.isArray(input) ? input : [input])
 
 const turndownService = new TurndownService()
 const markdownImgaeRegex = /(?:!\[(.*?)\]\((.*?)\))/gm
@@ -82,9 +92,11 @@ const main = async () => {
     })
 
     const content = matter.stringify(text, {
-      date: dateFns.format(date),
       draft: post['wp:status']._cdata === 'draft',
-      tags: [],
+      post_id: parseInt(post['wp:post_id']._text, 10),
+      publish_date: dateFns.format(date),
+      revise_date: dateFns.format(date),
+      tags: map(ensureArray(post.category), '_cdata'),
       title: post.title._text,
     })
 
