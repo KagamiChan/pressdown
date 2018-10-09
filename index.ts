@@ -3,11 +3,16 @@ import dateFns from 'date-fns'
 import fs from 'fs-extra'
 import got from 'got'
 import matter from 'gray-matter'
+import HttpsProxyAgent from 'https-proxy-agent'
 import { filter, map } from 'lodash'
 import path from 'path'
+import prettier from 'prettier'
 import TurndownService from 'turndown'
 import url from 'url'
 import convert, { ElementCompact } from 'xml-js'
+
+const proxy = process.env.https_proxy || process.env.http_proxy
+const httpsAgent = proxy ? new HttpsProxyAgent(proxy) : undefined
 
 interface ITextType {
   _attributes?: {
@@ -47,6 +52,22 @@ const ensureArray = <T = any>(input: T | T[]): T[] => (Array.isArray(input) ? in
 const turndownService = new TurndownService()
 const markdownImgaeRegex = /(?:!\[(.*?)\]\((.*?)\))/gm
 
+const format = (text: string) =>
+  prettier.format(
+    text
+      .replace(/“(.+?)”/g, (match: string, p1: string) => `「${p1}」`)
+      .replace(/”(.+?)“/g, (match: string, p1: string) => `「${p1}」`)
+      .replace(/‘(.+?)’/g, (match: string, p1: string) => `『${p1}』`)
+      .replace(/’(.+?)‘/g, (match: string, p1: string) => `『${p1}』`),
+    {
+      parser: 'markdown',
+      printWidth: 120,
+      semi: false,
+      singleQuote: true,
+      trailingComma: 'all',
+    },
+  )
+
 const main = async () => {
   const xml = await fs.readFile(process.argv[2])
 
@@ -61,9 +82,14 @@ const main = async () => {
 
   await Promise.map(posts, async (post: IWordpressPost) => {
     const date = dateFns.parse(post['wp:post_date']._cdata)
-    let text = turndownService.turndown(post['content:encoded']._cdata)
+
+    let html = post['content:encoded']._cdata
+
+    html = html.replace(/\n+/g, '<br />')
+
+    let text = turndownService.turndown(html)
     const title = decodeURI(post['wp:post_name']._cdata || post.title._text)
-    const directory = path.join(postsPath, `${dateFns.format(date, 'YYYY-MM-DD')}-${title}`)
+    const directory = path.join(postsPath, `${dateFns.format(date, 'YYYY-MM-DD')}-${format(title)}`)
 
     await fs.ensureDir(directory)
 
@@ -83,6 +109,7 @@ const main = async () => {
     await Promise.map(Object.keys(files), async filename => {
       try {
         const resp = await got(files[filename], {
+          agent: httpsAgent,
           encoding: 'binary',
         })
         await fs.outputFile(path.join(directory, filename), resp.body, 'binary')
@@ -91,13 +118,13 @@ const main = async () => {
       }
     })
 
-    const content = matter.stringify(text, {
+    const content = matter.stringify(format(text), {
       draft: post['wp:status']._cdata === 'draft',
       post_id: parseInt(post['wp:post_id']._text, 10),
       publish_date: dateFns.format(date),
       revise_date: dateFns.format(date),
       tags: map(ensureArray(post.category), '_cdata'),
-      title: post.title._text,
+      title: format(post.title._text),
     })
 
     await fs.writeFile(path.join(directory, 'index.md'), content)
