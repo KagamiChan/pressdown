@@ -4,7 +4,7 @@ import fs from 'fs-extra'
 import got from 'got'
 import matter from 'gray-matter'
 import HttpsProxyAgent from 'https-proxy-agent'
-import { filter, map } from 'lodash'
+import { filter, map, trim } from 'lodash'
 import path from 'path'
 import prettier from 'prettier'
 import TurndownService from 'turndown'
@@ -89,7 +89,7 @@ const main = async () => {
 
     let text = turndownService.turndown(html)
     const title = decodeURI(post['wp:post_name']._cdata || post.title._text)
-    const directory = path.join(postsPath, `${dateFns.format(date, 'YYYY-MM-DD')}-${format(title)}`)
+    const directory = path.join(postsPath, `${dateFns.format(date, 'YYYY-MM-DD')}-${trim(format(title))}`)
 
     await fs.ensureDir(directory)
 
@@ -124,7 +124,7 @@ const main = async () => {
       publish_date: dateFns.format(date),
       revise_date: dateFns.format(date),
       tags: map(ensureArray(post.category), '_cdata'),
-      title: format(post.title._text),
+      title: trim(format(post.title._text)),
     })
 
     await fs.writeFile(path.join(directory, 'index.md'), content)
