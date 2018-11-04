@@ -1,5 +1,6 @@
 import Promise from 'bluebird'
 import dateFns from 'date-fns'
+import filenamify from 'filenamify'
 import fs from 'fs-extra'
 import got from 'got'
 import matter from 'gray-matter'
@@ -89,7 +90,7 @@ const main = async () => {
 
     let text = turndownService.turndown(html)
     const title = decodeURI(post['wp:post_name']._cdata || post.title._text)
-    const directory = path.join(postsPath, `${dateFns.format(date, 'YYYY-MM-DD')}-${trim(format(title))}`)
+    const directory = path.join(postsPath, filenamify(`${dateFns.format(date, 'YYYY-MM-DD')}-${trim(format(title))}`))
 
     await fs.ensureDir(directory)
 
